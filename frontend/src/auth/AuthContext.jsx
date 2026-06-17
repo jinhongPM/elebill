@@ -10,7 +10,7 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
-      // 尝试解析 token 中的基本信息
+      // 灏濊瘯瑙ｆ瀽 token 涓殑鍩烘湰淇℃伅
       try {
         const payload = JSON.parse(atob(token.split(".")[1]));
         setUser({ id: payload.sub, username: payload.username, role: payload.role });

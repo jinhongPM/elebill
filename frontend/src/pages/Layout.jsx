@@ -1,4 +1,4 @@
-import React from "react";
+﻿import React from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 
@@ -6,11 +6,7 @@ export default function Layout() {
   const { user, isAdmin, logout } = useAuth();
   const navigate = useNavigate();
 
-  const handleLogout = () => {
-    logout();
-    navigate("/login");
-  };
-
+  const handleLogout = () => { logout(); navigate("/login"); };
   const linkClass = ({ isActive }) => (isActive ? "nav-link active" : "nav-link");
 
   return (
@@ -28,9 +24,7 @@ export default function Layout() {
         </nav>
         <button className="btn-logout" onClick={handleLogout}>退出登录</button>
       </aside>
-      <main className="main">
-        <Outlet />
-      </main>
+      <main className="main"><Outlet /></main>
     </div>
   );
 }

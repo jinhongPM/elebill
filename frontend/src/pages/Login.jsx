@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+﻿import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 
@@ -30,14 +30,8 @@ export default function Login() {
         <h1>电梯电费公摊计算</h1>
         <p className="login-subtitle">请输入账号密码登录</p>
         {error && <div className="error-msg">{error}</div>}
-        <label>
-          用户名
-          <input value={username} onChange={(e) => setUsername(e.target.value)} required />
-        </label>
-        <label>
-          密码
-          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
-        </label>
+        <label>用户名<input value={username} onChange={(e) => setUsername(e.target.value)} required /></label>
+        <label>密码<input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required /></label>
         <button type="submit" disabled={loading}>{loading ? "登录中..." : "登录"}</button>
       </form>
     </div>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect } from "react";
 import { api } from "../api";
 
 export default function Settings() {
@@ -7,8 +7,8 @@ export default function Settings() {
 
   useEffect(() => {
     api.getSettings().then((data) => {
-      const up = data.find((s) => s.key === "unit_price");
-      if (up) setUnitPrice(up.value);
+      const item = data.find((s) => s.key === "unit_price");
+      if (item) setUnitPrice(item.value);
     });
   }, []);
 
@@ -21,13 +21,9 @@ export default function Settings() {
   return (
     <div className="page">
       <h2>系统设置</h2>
-
       <div className="card">
         <div className="form-row">
-          <label>
-            电费单价 (元/kWh)
-            <input type="number" step="0.01" min="0" value={unitPrice} onChange={(e) => setUnitPrice(e.target.value)} />
-          </label>
+          <label>电费单价 (元/kWh)<input type="number" step="0.01" min="0" value={unitPrice} onChange={(e) => setUnitPrice(e.target.value)} /></label>
         </div>
         <div className="form-actions">
           <button className="btn-primary" onClick={handleSave}>保存</button>

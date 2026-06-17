@@ -10,14 +10,14 @@ import Settings from "./pages/Settings";
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
-  if (loading) return <div className="loading">加载中...</div>;
+  if (loading) return <div className="loading">鍔犺浇涓?..</div>;
   if (!user) return <Navigate to="/login" replace />;
   return children;
 }
 
 export default function App() {
   const { user, loading } = useAuth();
-  if (loading) return <div className="loading">加载中...</div>;
+  if (loading) return <div className="loading">鍔犺浇涓?..</div>;
 
   return (
     <Routes>
