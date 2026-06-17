@@ -13,38 +13,33 @@ export default function Bills() {
   var [loading, setLoading] = useState(false);
   var [error, setError] = useState('');
 
+  async function loadResult(data) {
+    if (!data || !data.tenants || data.tenants.length === 0) {
+      setError('暂无账单数据'); setLoading(false); return;
+    }
+    setResult(data); setLoading(false);
+  }
+
   async function handleView() {
     setLoading(true); setError(''); setResult(null);
     try {
-      var data = await api.getBills(yearMonth);
-      if (!data || data.length === 0) {
-        setError('该月份暂无账单数据，请先点击「计算本月账单」');
-        setLoading(false); return;
-      }
-      var tenants = data.map(function(b) {
-        return { tenant_id: b.tenant_id, tenant_name: b.tenant_name, building: b.building, floor: b.floor, area: b.area, elevators: b.elevators, total_cost: b.total_cost };
-      });
-      setResult({ year_month: yearMonth, unit_price: 0, a_elevators: [], b_elevators: [], tenants: tenants });
-    } catch (err) { setError(err.message); }
-    finally { setLoading(false); }
+      var data = await api.getBillsResult(yearMonth);
+      if (data) { loadResult(data); return; }
+      setError('该月份暂无账单数据，请先点击「计算本月账单」');
+      setLoading(false);
+    } catch (err) { setError(err.message); setLoading(false); }
   }
 
   async function handleCompute() {
     try {
       var existing = await api.getBills(yearMonth);
       if (existing && existing.length > 0) {
-        if (!confirm('该月份已有账单数据，覆盖重新计算？\n（新增租户后不影响历史账单，除非你刻意重新计算）')) {
-          return;
-        }
+        if (!confirm('该月份已有账单数据，覆盖重新计算？\n（新增租户不影响历史账单，除非刻意重算）')) return;
       }
     } catch (e) {}
-
     setLoading(true); setError(''); setResult(null);
-    try {
-      var data = await api.computeBills(yearMonth);
-      setResult(data);
-    } catch (err) { setError(err.message); }
-    finally { setLoading(false); }
+    try { var data = await api.computeBills(yearMonth); loadResult(data); }
+    catch (err) { setError(err.message); setLoading(false); }
   }
 
   async function handleExport() {
@@ -60,68 +55,38 @@ export default function Bills() {
 
   function handlePrint() { window.print(); }
 
-  function renderElevatorTable(list) {
-    if (!list || Object.keys(list).length === 0) return null;
-    var items = Object.values(list);
-    return React.createElement('div', { style: { marginBottom: 16 } },
-      React.createElement('table', { className: 'table', style: { fontSize: 13 } },
-        React.createElement('thead', null,
-          React.createElement('tr', null,
-            ['电梯','上月读数','本月读数','用电量(kWh)','电费(元)','使用总面积(㎡)','单价(元/㎡)'].map(function(h) {
-              return React.createElement('th', { key: h }, h);
-            })
-          )
-        ),
-        React.createElement('tbody', null,
-          items.map(function(e) {
-            return React.createElement('tr', { key: e.elevator },
-              React.createElement('td', null, e.elevator),
-              React.createElement('td', null, e.prev_reading),
-              React.createElement('td', null, e.current_reading),
-              React.createElement('td', null, e.usage),
-              React.createElement('td', null, e.cost.toFixed(2)),
-              React.createElement('td', null, e.total_area),
-              React.createElement('td', null, e.per_sqm.toFixed(4))
-            );
-          })
-        )
+  function table(headers, rows, foot) {
+    return React.createElement('table', { className: 'table' },
+      React.createElement('thead', null, React.createElement('tr', null, headers.map(function(h) { return React.createElement('th', { key: h }, h); }))),
+      React.createElement('tbody', null,
+        rows.map(function(r, i) { return React.createElement('tr', { key: i }, r.map(function(c, j) { return React.createElement('td', { key: j, className: j === r.length-1 ? 'cost' : '' }, c); })); }),
+        foot ? React.createElement('tr', { className: 'total-row', key: 't' }, foot.map(function(c, j) { return React.createElement('td', { key: j, className: j === foot.length-1 ? 'cost' : '' }, c); })) : null
       )
     );
   }
 
-  function renderTenantTable(list) {
-    if (!list || list.length === 0) return null;
+  function elevTable(elevs) {
+    var items = Object.values(elevs);
+    if (items.length === 0) return null;
+    var totalCost = items.reduce(function(s, e) { return s + e.cost; }, 0);
+    return table(
+      ['电梯','上月读数','本月读数','用电量','电费(元)','总面积(㎡)','单价(元/㎡)'],
+      items.map(function(e) { return [e.elevator, e.prev_reading, e.current_reading, e.usage, e.cost.toFixed(2), e.total_area, e.per_sqm.toFixed(4)]; }),
+      ['小计', '', '', '', totalCost.toFixed(2), '', '']
+    );
+  }
+
+  function tenantTable(list) {
     var sum = list.reduce(function(s, b) { return s + b.total_cost; }, 0);
-    return React.createElement('table', { className: 'table' },
-      React.createElement('thead', null,
-        React.createElement('tr', null,
-          ['租户','楼层','面积(㎡)','使用电梯','公摊电费(元)'].map(function(h) {
-            return React.createElement('th', { key: h }, h);
-          })
-        )
-      ),
-      React.createElement('tbody', null,
-        list.map(function(b) {
-          return React.createElement('tr', { key: b.tenant_id },
-            React.createElement('td', null, b.tenant_name),
-            React.createElement('td', null, b.floor + '楼'),
-            React.createElement('td', null, b.area),
-            React.createElement('td', null, b.elevators),
-            React.createElement('td', { className: 'cost' }, b.total_cost.toFixed(2))
-          );
-        }),
-        React.createElement('tr', { className: 'total-row', key: 'total' },
-          React.createElement('td', { colSpan: 4 }, '合计'),
-          React.createElement('td', { className: 'cost' }, sum.toFixed(2))
-        )
-      )
+    return table(
+      ['租户','楼层','面积(㎡)','使用电梯','公摊电费(元)'],
+      list.map(function(b) { return [b.tenant_name, b.floor + '楼', b.area, b.elevators, b.total_cost.toFixed(2)]; }),
+      ['合计', '', '', '', sum.toFixed(2)]
     );
   }
 
   var aBills = result ? result.tenants.filter(function(b) { return b.building === 'A'; }) : [];
   var bBills = result ? result.tenants.filter(function(b) { return b.building === 'B'; }) : [];
-  var aElevs = result ? result.a_elevators : null;
-  var bElevs = result ? result.b_elevators : null;
 
   return (
     React.createElement('div', { className: 'page' },
@@ -141,24 +106,24 @@ export default function Bills() {
       ),
 
       result && result.tenants && result.tenants.length > 0 && React.createElement('div', { className: 'bills-section' },
-        aElevs && Object.keys(aElevs).length > 0 && React.createElement('div', { className: 'bill-group' },
+        result.a_elevators && Object.keys(result.a_elevators).length > 0 && React.createElement('div', { className: 'bill-group' },
           React.createElement('h3', null, 'A栋电梯详情'),
-          renderElevatorTable(aElevs)
+          elevTable(result.a_elevators)
         ),
-        bElevs && Object.keys(bElevs).length > 0 && React.createElement('div', { className: 'bill-group' },
+        result.b_elevators && Object.keys(result.b_elevators).length > 0 && React.createElement('div', { className: 'bill-group' },
           React.createElement('h3', null, 'B栋电梯详情'),
-          renderElevatorTable(bElevs)
+          elevTable(result.b_elevators)
         ),
         aBills.length > 0 && React.createElement('div', { className: 'bill-group' },
           React.createElement('h3', null, 'A栋租户账单 - ' + yearMonth),
-          renderTenantTable(aBills)
+          tenantTable(aBills)
         ),
         bBills.length > 0 && React.createElement('div', { className: 'bill-group' },
           React.createElement('h3', null, 'B栋租户账单 - ' + yearMonth),
-          renderTenantTable(bBills)
+          tenantTable(bBills)
         )
       ),
-      !result && !error && React.createElement('div', { className: 'empty' }, '点击「查看账单」查看已存账单，或「计算本月账单」生成新数据')
+      !result && !error && React.createElement('div', { className: 'empty' }, '点击「查看账单」查看历史，或「计算本月账单」生成新数据')
     )
   );
 }
