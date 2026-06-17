@@ -5,6 +5,7 @@ const ELEVATORS = { A: ["A1", "A2", "A3"], B: ["B1", "B2", "B3"] };
 const FLOORS = [2, 3, 4, 5, 6];
 
 export default function Tenants() {
+  const [showForm, setShowForm] = useState(false);
   const [tenants, setTenants] = useState([]);
   const [filter, setFilter] = useState("");
   const [editing, setEditing] = useState(null);
@@ -25,14 +26,23 @@ export default function Tenants() {
   }
 
   function startEdit(t) {
-    setForm({ name: t.name, building: t.building, floor: t.floor, area: String(t.area), elevators: t.elevators.split(",").map((e) => e.trim()) });
+    setShowForm(true);
+    setForm({
+      name: t.name,
+      building: t.building,
+      floor: t.floor,
+      area: String(t.area),
+      elevators: t.elevators.split(",").map((e) => e.trim()),
+    });
     setEditing(t.id);
   }
 
   function toggleElevator(el) {
     setForm((f) => ({
       ...f,
-      elevators: f.elevators.includes(el) ? f.elevators.filter((e) => e !== el) : [...f.elevators, el],
+      elevators: f.elevators.includes(el)
+        ? f.elevators.filter((e) => e !== el)
+        : [...f.elevators, el],
     }));
   }
 
@@ -51,6 +61,7 @@ export default function Tenants() {
       await api.createTenant(data);
     }
     resetForm();
+    setShowForm(false);
     loadTenants();
   }
 
@@ -70,41 +81,86 @@ export default function Tenants() {
           <option value="A">A栋</option>
           <option value="B">B栋</option>
         </select>
-        <button className="btn-primary" onClick={resetForm}>新增租户</button>
+        <button className="btn-primary" onClick={() => { setShowForm(true); resetForm(); }}>
+          新增租户
+        </button>
       </div>
 
-      {!editing && form.name === "" && form.area === "" ? null : (
+      {showForm && (
         <form className="card form-tenant" onSubmit={handleSubmit}>
           <h3>{editing ? "编辑租户" : "新增租户"}</h3>
           <div className="form-row">
-            <label>名称<input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required /></label>
-            <label>楼栋
-              <select value={form.building} onChange={(e) => { setForm({ ...form, building: e.target.value, elevators: [] }) }}>
+            <label>
+              名称
+              <input
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                required
+              />
+            </label>
+            <label>
+              楼栋
+              <select
+                value={form.building}
+                onChange={(e) => {
+                  setForm({ ...form, building: e.target.value, elevators: [] });
+                }}
+              >
                 <option value="A">A栋</option>
                 <option value="B">B栋</option>
               </select>
             </label>
-            <label>楼层
-              <select value={form.floor} onChange={(e) => setForm({ ...form, floor: Number(e.target.value) })}>
-                {FLOORS.map((f) => <option key={f} value={f}>{f}楼</option>)}
+            <label>
+              楼层
+              <select
+                value={form.floor}
+                onChange={(e) => setForm({ ...form, floor: Number(e.target.value) })}
+              >
+                {FLOORS.map((f) => (
+                  <option key={f} value={f}>
+                    {f}楼
+                  </option>
+                ))}
               </select>
             </label>
-            <label>面积 (㎡)<input type="number" step="0.1" min="0" value={form.area} onChange={(e) => setForm({ ...form, area: e.target.value })} required /></label>
+            <label>
+              面积 (㎡)
+              <input
+                type="number"
+                step="0.1"
+                min="0"
+                value={form.area}
+                onChange={(e) => setForm({ ...form, area: e.target.value })}
+                required
+              />
+            </label>
           </div>
           <div className="form-row">
             <label>使用电梯：</label>
             <div className="elevator-checkboxes">
               {ELEVATORS[form.building].map((el) => (
                 <label key={el} className="checkbox-label">
-                  <input type="checkbox" checked={form.elevators.includes(el)} onChange={() => toggleElevator(el)} />
+                  <input
+                    type="checkbox"
+                    checked={form.elevators.includes(el)}
+                    onChange={() => toggleElevator(el)}
+                  />
                   {el}
                 </label>
               ))}
             </div>
           </div>
           <div className="form-actions">
-            <button type="submit" className="btn-primary">{editing ? "保存" : "新增"}</button>
-            <button type="button" className="btn-secondary" onClick={resetForm}>取消</button>
+            <button type="submit" className="btn-primary">
+              {editing ? "保存" : "新增"}
+            </button>
+            <button
+              type="button"
+              className="btn-secondary"
+              onClick={() => { resetForm(); setShowForm(false); }}
+            >
+              取消
+            </button>
           </div>
         </form>
       )}
@@ -122,7 +178,9 @@ export default function Tenants() {
         </thead>
         <tbody>
           {tenants.length === 0 && (
-            <tr><td colSpan="6" className="empty">暂无租户</td></tr>
+            <tr>
+              <td colSpan="6" className="empty">暂无租户</td>
+            </tr>
           )}
           {tenants.map((t) => (
             <tr key={t.id}>
@@ -132,8 +190,15 @@ export default function Tenants() {
               <td>{t.area}</td>
               <td>{t.elevators}</td>
               <td className="actions">
-                <button className="btn-sm" onClick={() => startEdit(t)}>编辑</button>
-                <button className="btn-sm btn-danger" onClick={() => handleDelete(t.id)}>删除</button>
+                <button className="btn-sm" onClick={() => startEdit(t)}>
+                  编辑
+                </button>
+                <button
+                  className="btn-sm btn-danger"
+                  onClick={() => handleDelete(t.id)}
+                >
+                  删除
+                </button>
               </td>
             </tr>
           ))}
