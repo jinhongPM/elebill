@@ -1,4 +1,4 @@
-const API_BASE = "https://elevator-cost-api.jhelebill.workers.dev/api";
+﻿const API_BASE = "https://elevator-cost-api.jhelebill.workers.dev/api";
 
 async function request(path, options) {
   if (!options) options = {};
@@ -35,6 +35,7 @@ export const api = {
     request("/readings", { method: "POST", body: JSON.stringify({ year_month: yearMonth, readings }) }),
 
   getBills: (yearMonth) => request("/bills?year_month=" + yearMonth),
+  getBillsResult: (yearMonth) => request("/bills/result?year_month=" + yearMonth),
   computeBills: (yearMonth) =>
     request("/bills/compute", { method: "POST", body: JSON.stringify({ year_month: yearMonth }) }),
 
