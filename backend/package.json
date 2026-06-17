@@ -1,0 +1,20 @@
+{
+  "name": "elevator-cost-api",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "wrangler dev src/index.ts",
+    "deploy": "wrangler deploy src/index.ts",
+    "db:create": "wrangler d1 create elevator_cost_db",
+    "db:migrate": "wrangler d1 execute elevator_cost_db --file=./migrations/001_init.sql",
+    "db:migrate:local": "wrangler d1 execute elevator_cost_db --local --file=./migrations/001_init.sql"
+  },
+  "dependencies": {
+    "hono": "^4.7.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250201.0",
+    "typescript": "^5.7.0",
+    "wrangler": "^4.101.0"
+  }
+}

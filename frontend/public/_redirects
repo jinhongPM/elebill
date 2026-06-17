@@ -1,0 +1,2 @@
+# Cloudflare Pages: /api/* -> Worker
+/api/* https://elevator-cost-api.jhelebill.workers.dev/api/:splat 200
