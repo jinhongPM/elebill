@@ -1,11 +1,8 @@
-﻿name: Deploy
+name: Deploy
 
 on:
   push:
     branches: [master]
-    paths:
-      - "backend/**"
-      - "frontend/**"
 
 jobs:
   deploy-backend:
