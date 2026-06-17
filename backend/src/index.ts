@@ -1,6 +1,6 @@
 import { Hono } from "hono";
-import { jwt } from "hono/jwt";
 import { cors } from "hono/cors";
+import { jwtMiddleware } from "./jwt";
 import { authRoutes } from "./auth";
 import { tenantRoutes } from "./tenants";
 import { readingRoutes } from "./readings";
@@ -10,7 +10,7 @@ import type { Env } from "./types";
 
 const app = new Hono<{ Bindings: Env }>();
 
-// CORS --- 允许生产环境所有来源
+// CORS
 app.use(
   "/api/*",
   cors({
@@ -23,16 +23,16 @@ app.use(
 // 登录路由（公开）
 app.route("/api/auth", authRoutes);
 
-// JWT 中间件 — 之后所有 /api/* 路由需要认证
+// JWT 中间件 — 保护 /api/*，排除 /api/auth
 app.use("/api/*", async (c, next) => {
   if (c.req.path.startsWith("/api/auth")) {
     return next();
   }
-  const jwtMiddleware = jwt({ secret: c.env.JWT_SECRET });
-  return jwtMiddleware(c, next);
+  const mw = jwtMiddleware(c.env.JWT_SECRET);
+  return mw(c, next);
 });
 
-// 受保护路由
+// 业务路由
 app.route("/api", tenantRoutes);
 app.route("/api", readingRoutes);
 app.route("/api", billRoutes);

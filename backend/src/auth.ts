@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { sign } from "hono/jwt";
+import { sign } from "./jwt";
 import type { Env, User } from "./types";
 
 const auth = new Hono<{ Bindings: Env }>();
