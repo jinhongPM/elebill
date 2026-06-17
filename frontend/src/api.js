@@ -9,8 +9,8 @@ async function request(path, options) {
 
   const res = await fetch(API_BASE + path, { ...options, headers });
   if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: "请求失败" }));
-    throw new Error(err.error || "HTTP " + res.status);
+    const err = await res.json().catch(() => null);
+    throw new Error((err && err.error) || "HTTP " + res.status);
   }
   return res.json();
 }

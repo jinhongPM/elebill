@@ -16,9 +16,13 @@ bills.get('/bills', async function(c) {
 bills.get('/bills/result', async function(c) {
   var ym = c.req.query('year_month');
   if (!ym) return c.json({ error: '请指定年月' }, 400);
-  var r = await c.env.DB.prepare('SELECT data FROM compute_results WHERE year_month = ?').bind(ym).first();
-  if (!r) return c.json(null, 404);
-  return c.json(JSON.parse(r.data));
+  try {
+    var r = await c.env.DB.prepare('SELECT data FROM compute_results WHERE year_month = ?').bind(ym).first();
+    if (!r) return c.json({ error: '暂无数据，请先计算本月账单' }, 404);
+    return c.json(JSON.parse(r.data));
+  } catch (e) {
+    return c.json({ error: '暂无数据，请先计算本月账单' }, 404);
+  }
 });
 
 // 计算账单
@@ -69,7 +73,7 @@ bills.post('/bills/compute', async function(c) {
   var bCosts = calc('B');
   var details = [];
 
-  tenants.results.forEach(function(tenant) {
+  await Promise.all(tenants.results.map(async function(tenant) {
     var costs = tenant.building === 'A' ? aCosts : bCosts;
     var used = tenant.elevators.split(',').map(function(e) { return e.trim(); });
     var perSqmSum = 0;
@@ -82,13 +86,13 @@ bills.post('/bills/compute', async function(c) {
     details.push({ tenant_id: tenant.id, tenant_name: tenant.name, building: tenant.building, floor: tenant.floor, area: tenant.area, elevators: tenant.elevators, per_sqm_sum: Math.round(perSqmSum * 10000) / 10000, total_cost: totalCost });
 
     var insertSQL = 'INSERT INTO bills (tenant_id, year_month, total_cost, breakdown) VALUES (?, ?, ?, ?) ON CONFLICT(tenant_id, year_month) DO UPDATE SET total_cost = excluded.total_cost, breakdown = excluded.breakdown';
-    c.env.DB.prepare(insertSQL).bind(tenant.id, year_month, totalCost, JSON.stringify(elDetails)).run();
-  });
+    await c.env.DB.prepare(insertSQL).bind(tenant.id, year_month, totalCost, JSON.stringify(elDetails)).run();
+  }));
 
   var fullResult = { year_month: year_month, unit_price: unitPrice, a_elevators: aCosts, b_elevators: bCosts, tenants: details };
 
   // 保存完整结果用于后续查看
-  c.env.DB.prepare('INSERT OR REPLACE INTO compute_results (year_month, data) VALUES (?, ?)').bind(year_month, JSON.stringify(fullResult)).run();
+  await c.env.DB.prepare('INSERT OR REPLACE INTO compute_results (year_month, data) VALUES (?, ?)').bind(year_month, JSON.stringify(fullResult)).run();
 
   return c.json(fullResult);
 });
