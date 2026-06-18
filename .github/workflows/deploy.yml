@@ -9,11 +9,8 @@ jobs:
     runs-on: ubuntu-latest
     name: Deploy Worker
     steps:
-      - uses: actions/checkout@v4
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
+      - uses: actions/checkout@v5
+
       - name: Install & Deploy Worker
         working-directory: ./backend
         run: |
