@@ -105,4 +105,59 @@ bills.delete('/bills', async function(c) {
   return c.json({ ok: true });
 });
 
+
+// 年度汇总
+bills.get('/bills/summary', async function(c) {
+  var year = c.req.query('year');
+  if (!year) return c.json({ error: '请指定年份' }, 400);
+  try {
+    var rows = await c.env.DB.prepare(
+      "SELECT year_month, data FROM compute_results WHERE year_month LIKE ? ORDER BY year_month"
+    ).bind(year + '-%').all();
+    
+    if (!rows.results || rows.results.length === 0) return c.json({ year: parseInt(year), months: [], total: { a: 0, b: 0, all: 0 } });
+    
+    var months = [];
+    var totalA = 0, totalB = 0;
+    
+    rows.results.forEach(function(r) {
+      var d = JSON.parse(r.data);
+      var mA = 0, mB = 0;
+      var elevA = {}, elevB = {};
+      
+      if (d.a_elevators) {
+        Object.values(d.a_elevators).forEach(function(e) { var cost = e.cost || 0; mA += cost; elevA[e.elevator] = cost; });
+      }
+      if (d.b_elevators) {
+        Object.values(d.b_elevators).forEach(function(e) { var cost = e.cost || 0; mB += cost; elevB[e.elevator] = cost; });
+      }
+      
+      var mTotal = mA + mB;
+      totalA += mA; totalB += mB;
+      
+      months.push({
+        year_month: r.year_month,
+        month_label: r.year_month.split('-')[1] + '月',
+        a_total: Math.round(mA * 100) / 100,
+        b_total: Math.round(mB * 100) / 100,
+        total: Math.round(mTotal * 100) / 100,
+        a_elevators: elevA,
+        b_elevators: elevB
+      });
+    });
+    
+    return c.json({
+      year: parseInt(year),
+      months: months,
+      total: {
+        a: Math.round(totalA * 100) / 100,
+        b: Math.round(totalB * 100) / 100,
+        all: Math.round((totalA + totalB) * 100) / 100
+      }
+    });
+  } catch (e) {
+    return c.json({ error: '暂无汇总数据' }, 404);
+  }
+});
+
 export { bills as billRoutes };

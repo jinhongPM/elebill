@@ -50,6 +50,8 @@ export const api = {
     request("/users/" + id, { method: "PUT", body: JSON.stringify(data) }),
   resetPassword: (id, password) =>
     request("/users/" + id + "/password", { method: "PUT", body: JSON.stringify({ password }) }),
+  getSummary: (year) => request("/bills/summary?year=" + year),
+
   deleteUser: (id) =>
     request("/users/" + id, { method: "DELETE" }),
 };

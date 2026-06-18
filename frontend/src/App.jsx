@@ -8,6 +8,7 @@ import Meters from "./pages/Meters";
 import Bills from "./pages/Bills";
 import Settings from "./pages/Settings";
 import Users from "./pages/Users";
+import Summary from "./pages/Summary";
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
@@ -37,6 +38,7 @@ export default function App() {
         <Route path="bills" element={<ProtectedRoute><Bills /></ProtectedRoute>} />
         <Route path="settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
         <Route path="users" element={<ProtectedRoute><Users /></ProtectedRoute>} />
+        <Route path="summary" element={<ProtectedRoute><Summary /></ProtectedRoute>} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

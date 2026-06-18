@@ -19,6 +19,7 @@ export default function Layout() {
         <nav className="nav">
           <NavLink to="/meters" className={linkClass}>电表录入</NavLink>
           <NavLink to="/bills" className={linkClass}>账单查看</NavLink>
+          <NavLink to="/summary" className={linkClass}>年度汇总</NavLink>
           {isAdmin && <NavLink to="/tenants" className={linkClass}>租户管理</NavLink>}
           {isAdmin && <NavLink to="/users" className={linkClass}>用户管理</NavLink>}
           {isAdmin && <NavLink to="/settings" className={linkClass}>系统设置</NavLink>}
