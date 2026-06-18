@@ -6,6 +6,7 @@ import { tenantRoutes } from "./tenants";
 import { readingRoutes } from "./readings";
 import { billRoutes } from "./bills";
 import { settingsRoutes } from "./settings";
+import { userRoutes } from "./users";
 import type { Env } from "./types";
 
 const app = new Hono<{ Bindings: Env }>();
@@ -28,6 +29,7 @@ app.route("/api", tenantRoutes);
 app.route("/api", readingRoutes);
 app.route("/api", billRoutes);
 app.route("/api", settingsRoutes);
+app.route("/api", userRoutes);
 app.get("/api/health", (c) => c.json({ ok: true }));
 
 export default app;
