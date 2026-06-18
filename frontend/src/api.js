@@ -1,18 +1,7 @@
-﻿const API_BASE = "https://elevator-cost-api.jhelebill.workers.dev/api";
+const API_BASE = "https://elevator-cost-api.jhelebill.workers.dev/api";
 
 async function request(path, options) {
-  if (!options) options = {
-  getUsers: () => request("/users"),
-  createUser: (data) =>
-    request("/users", { method: "POST", body: JSON.stringify(data) }),
-  updateUser: (id, data) =>
-    request("/users/" + id, { method: "PUT", body: JSON.stringify(data) }),
-  resetPassword: (id, password) =>
-    request("/users/" + id + "/password", { method: "PUT", body: JSON.stringify({ password }) }),
-  deleteUser: (id) =>
-    request("/users/" + id, { method: "DELETE" }),
-
-};
+  if (!options) options = {};
   const token = localStorage.getItem("token");
   const headers = { "Content-Type": "application/json" };
   if (options.headers) Object.assign(headers, options.headers);
@@ -53,4 +42,14 @@ export const api = {
   getSettings: () => request("/settings"),
   updateSetting: (key, value) =>
     request("/settings/" + key, { method: "PUT", body: JSON.stringify({ value }) }),
+
+  getUsers: () => request("/users"),
+  createUser: (data) =>
+    request("/users", { method: "POST", body: JSON.stringify(data) }),
+  updateUser: (id, data) =>
+    request("/users/" + id, { method: "PUT", body: JSON.stringify(data) }),
+  resetPassword: (id, password) =>
+    request("/users/" + id + "/password", { method: "PUT", body: JSON.stringify({ password }) }),
+  deleteUser: (id) =>
+    request("/users/" + id, { method: "DELETE" }),
 };
