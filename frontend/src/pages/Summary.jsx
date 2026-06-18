@@ -10,6 +10,8 @@ export default function Summary() {
   var [data, setData] = useState(null);
   var [loading, setLoading] = useState(false);
   var [error, setError] = useState("");
+  var [expandedMonth, setExpandedMonth] = useState(null);
+  var [expandedBuilding, setExpandedBuilding] = useState(null);
 
   useEffect(() => { loadSummary(); }, [year]);
 
@@ -25,22 +27,50 @@ export default function Summary() {
     setLoading(false);
   }
 
+
+  function toggleExpand(m, building) {
+    if (expandedMonth === m.year_month && expandedBuilding === building) {
+      setExpandedMonth(null);
+      setExpandedBuilding(null);
+    } else {
+      setExpandedMonth(m.year_month);
+      setExpandedBuilding(building);
+    }
+  }
+
   function maxVal(months, key) {
     var max = 0;
     months.forEach(function(m) { if (m[key] > max) max = m[key]; });
     return max || 1;
   }
 
-  function barChart(months, key, color) {
+  function barChart(months, building, key, color) {
     var mx = maxVal(months, key);
     return months.map(function(m, i) {
       var pct = (m[key] / mx * 100).toFixed(0);
-      return React.createElement("div", { key: i, className: "bar-row", style: { display: "flex", alignItems: "center", gap: 8, marginBottom: 4 } },
-        React.createElement("span", { style: { width: 40, fontSize: 12, color: "#666", textAlign: "right" } }, m.month_label),
-        React.createElement("div", { style: { flex: 1, height: 20, background: "#eee", borderRadius: 4, overflow: "hidden" } },
-          React.createElement("div", { style: { width: pct + "%", height: "100%", background: color, borderRadius: 4, transition: "width 0.3s" } })
+      var expanded = expandedMonth === m.year_month && expandedBuilding === building;
+      var elev = building === "A" ? m.a_elevators : m.b_elevators;
+      return React.createElement(React.Fragment, { key: i },
+        React.createElement("div", {
+          className: "bar-row",
+          style: { display: "flex", alignItems: "center", gap: 8, marginBottom: expanded ? 0 : 4, cursor: "pointer", padding: "2px 0" },
+          onClick: function() { toggleExpand(m, building); },
+          title: "点击查看电梯详情"
+        },
+          React.createElement("span", { style: { width: 40, fontSize: 12, color: "#666", textAlign: "right" } }, m.month_label),
+          React.createElement("div", { style: { flex: 1, height: 20, background: "#eee", borderRadius: 4, overflow: "hidden" } },
+            React.createElement("div", { style: { width: pct + "%", height: "100%", background: color, borderRadius: 4, transition: "width 0.3s" } })
+          ),
+          React.createElement("span", { style: { width: 70, fontSize: 12, textAlign: "right", fontWeight: 600 } }, m[key].toFixed(0) + "元")
         ),
-        React.createElement("span", { style: { width: 70, fontSize: 12, textAlign: "right", fontWeight: 600 } }, m[key].toFixed(0) + "元")
+        expanded && React.createElement("div", { style: { marginLeft: 48, marginBottom: 8, padding: 8, background: "#f8f9fa", borderRadius: 6, fontSize: 12 } },
+          Object.keys(elev).sort().map(function(el) {
+            return React.createElement("div", { key: el, style: { display: "flex", gap: 12, padding: "2px 0" } },
+              React.createElement("span", { style: { width: 30, fontWeight: 600 } }, el),
+              React.createElement("span", null, elev[el].toFixed(2) + "元")
+            );
+          })
+        )
       );
     });
   }
@@ -87,11 +117,11 @@ export default function Summary() {
         React.createElement("div", { style: { display: "flex", gap: 40 } },
           React.createElement("div", { style: { flex: 1 } },
             React.createElement("div", { style: { fontSize: 13, color: "#4fc3f7", fontWeight: 600, marginBottom: 8 } }, "A栋"),
-            barChart(data.months, "a_total", "#4fc3f7")
+            barChart(data.months, "A", "a_total", "#4fc3f7")
           ),
           React.createElement("div", { style: { flex: 1 } },
             React.createElement("div", { style: { fontSize: 13, color: "#81c784", fontWeight: 600, marginBottom: 8 } }, "B栋"),
-            barChart(data.months, "b_total", "#81c784")
+            barChart(data.months, "B", "b_total", "#81c784")
           )
         )
       ),
