@@ -1,0 +1,11 @@
+﻿name = "elevator-cost-api"
+main = "src/index.ts"
+compatibility_date = "2025-02-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "elevator_cost_db"
+database_id = "dded020d-ffbd-453b-82ea-51f04ffa9527"
+
+[vars]
+JWT_SECRET = "ElevatorCost2026-SecretKey-ChangeMe"
