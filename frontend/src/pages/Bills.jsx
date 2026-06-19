@@ -80,7 +80,7 @@ export default function Bills() {
     var sum = list.reduce(function(s, b) { return s + b.total_cost; }, 0);
     return table(
       ['租户','楼层','面积(㎡)','使用电梯','公摊电费(元)'],
-      list.map(function(b) { return [b.tenant_name, b.floor + '楼', b.area, b.elevators, b.total_cost.toFixed(2)]; }),
+      list.map(function(b) { return [b.tenant_name, b.floor + '楼', b.area, b.elevators.split(',').map(function(e){return e.trim()}).sort().join(','), b.total_cost.toFixed(2)]; }),
       ['合计', '', '', '', sum.toFixed(2)]
     );
   }
