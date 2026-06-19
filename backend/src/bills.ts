@@ -7,7 +7,7 @@ var bills = new Hono();
 bills.get('/bills', async function(c) {
   var ym = c.req.query('year_month');
   if (!ym) return c.json({ error: '请指定年月' }, 400);
-  var sql = 'SELECT b.*, t.name as tenant_name, t.building, t.floor, t.area, t.elevators FROM bills b JOIN tenants t ON b.tenant_id = t.id WHERE b.year_month = ? ORDER BY t.building, t.floor, t.name';
+  var sql = 'SELECT b.*, t.name as tenant_name, t.building, t.floor, t.area, t.elevators FROM bills b JOIN tenants t ON b.tenant_id = t.id WHERE b.year_month = ? ORDER BY t.building, t.floor DESC, t.name';
   var r = await c.env.DB.prepare(sql).bind(ym).all();
   return c.json(r.results);
 });
@@ -49,7 +49,7 @@ bills.post('/bills/compute', async function(c) {
   var prevMap = new Map();
   prevRows.results.forEach(function(r) { prevMap.set(r.elevator, r.reading); });
 
-  var tenants = await c.env.DB.prepare('SELECT * FROM tenants ORDER BY building, floor').all();
+  var tenants = await c.env.DB.prepare('SELECT * FROM tenants ORDER BY building, floor DESC').all();
   if (tenants.results.length === 0) return c.json({ error: '尚未录入租户信息' }, 400);
 
   function calc(building) {
