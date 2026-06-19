@@ -42,15 +42,75 @@ export default function Bills() {
     catch (err) { setError(err.message); setLoading(false); }
   }
 
+  function excelRow(cells, bold) {
+    var style = bold ? 'font-weight:bold;background:#1a1a2e;color:#fff;' : '';
+    var border = 'border:1px solid #ccc;padding:6px 10px;';
+    return '<tr>' + cells.map(function(c) { return '<td style="' + border + style + '">' + (c != null ? c : '') + '</td>'; }).join('') + '</tr>';
+  }
+
   async function handleExport() {
     if (!result || !result.tenants || result.tenants.length === 0) return;
-    var XLSX = await import('xlsx');
-    var rows = result.tenants.map(function(b) {
-      return { '租户': b.tenant_name, '楼栋': b.building + '栋', '楼层': b.floor + '楼', '面积(㎡)': b.area, '使用电梯': b.elevators, '公摊电费(元)': b.total_cost };
-    });
-    var wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows), yearMonth + '账单');
-    XLSX.writeFile(wb, '电梯电费_' + yearMonth + '.xlsx');
+
+    var ym = yearMonth;
+    var html = '<html><head><meta charset="utf-8"><title>电梯电费_' + ym + '</title></head><body>';
+    html += '<h2 style="text-align:center">电梯电费公摊 - ' + ym + '</h2>';
+    html += '<p>电费单价: ' + (result.unit_price || 0) + ' 元/kWh</p>';
+
+    // A栋电梯详情
+    if (result.a_elevators && Object.keys(result.a_elevators).length > 0) {
+      html += '<h3>A栋电梯详情</h3><table style="border-collapse:collapse;width:100%;margin-bottom:20px">';
+      html += excelRow(['电梯','上月读数','本月读数','用电量','电费(元)','总面积(㎡)','单价(元/㎡)'], true);
+      var aEls = Object.values(result.a_elevators);
+      aEls.forEach(function(e) { html += excelRow([e.elevator, e.prev_reading, e.current_reading, e.usage, e.cost.toFixed(2), e.total_area, e.per_sqm.toFixed(4)]); });
+      var aTotal = aEls.reduce(function(s, e) { return s + e.cost; }, 0);
+      html += excelRow(['小计', '', '', '', aTotal.toFixed(2), '', ''], true);
+      html += '</table>';
+    }
+
+    // B栋电梯详情
+    if (result.b_elevators && Object.keys(result.b_elevators).length > 0) {
+      html += '<h3>B栋电梯详情</h3><table style="border-collapse:collapse;width:100%;margin-bottom:20px">';
+      html += excelRow(['电梯','上月读数','本月读数','用电量','电费(元)','总面积(㎡)','单价(元/㎡)'], true);
+      var bEls = Object.values(result.b_elevators);
+      bEls.forEach(function(e) { html += excelRow([e.elevator, e.prev_reading, e.current_reading, e.usage, e.cost.toFixed(2), e.total_area, e.per_sqm.toFixed(4)]); });
+      var bTotal = bEls.reduce(function(s, e) { return s + e.cost; }, 0);
+      html += excelRow(['小计', '', '', '', bTotal.toFixed(2), '', ''], true);
+      html += '</table>';
+    }
+
+    // A栋租户
+    var aBills = result.tenants.filter(function(b) { return b.building === 'A'; });
+    if (aBills.length > 0) {
+      html += '<h3>A栋租户账单</h3><table style="border-collapse:collapse;width:100%;margin-bottom:20px">';
+      html += excelRow(['租户','楼层','面积(㎡)','使用电梯','公摊电费(元)'], true);
+      aBills.forEach(function(b) { html += excelRow([b.tenant_name, b.floor + '楼', b.area, b.elevators.split(',').map(function(e){return e.trim()}).sort().join(','), b.total_cost.toFixed(2)]); });
+      var aSum = aBills.reduce(function(s, b) { return s + b.total_cost; }, 0);
+      html += excelRow(['合计', '', '', '', aSum.toFixed(2)], true);
+      html += '</table>';
+    }
+
+    // B栋租户
+    var bBills = result.tenants.filter(function(b) { return b.building === 'B'; });
+    if (bBills.length > 0) {
+      html += '<h3>B栋租户账单</h3><table style="border-collapse:collapse;width:100%;margin-bottom:20px">';
+      html += excelRow(['租户','楼层','面积(㎡)','使用电梯','公摊电费(元)'], true);
+      bBills.forEach(function(b) { html += excelRow([b.tenant_name, b.floor + '楼', b.area, b.elevators.split(',').map(function(e){return e.trim()}).sort().join(','), b.total_cost.toFixed(2)]); });
+      var bSum = bBills.reduce(function(s, b) { return s + b.total_cost; }, 0);
+      html += excelRow(['合计', '', '', '', bSum.toFixed(2)], true);
+      html += '</table>';
+    }
+
+    var grandTotal = result.tenants.reduce(function(s, b) { return s + b.total_cost; }, 0);
+    html += '<p style="font-size:16px;font-weight:bold;text-align:right">总计: ' + grandTotal.toFixed(2) + ' 元</p>';
+    html += '</body></html>';
+
+    var blob = new Blob([html], { type: 'application/vnd.ms-excel' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = '电梯电费_' + ym + '.xls';
+    a.click();
+    URL.revokeObjectURL(url);
   }
 
   function handlePrint() { window.print(); }
