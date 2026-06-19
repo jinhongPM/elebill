@@ -1,5 +1,9 @@
-﻿import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { api } from "../api";
+
+function sortElevators(s) {
+  return s.split(",").map(function(e){return e.trim()}).sort().join(",");
+}
 
 const ELEVATORS = { A: ["A1", "A2", "A3"], B: ["B1", "B2", "B3"] };
 const FLOORS = [2, 3, 4, 5, 6];
@@ -35,7 +39,7 @@ export default function Tenants() {
 
   async function handleSubmit(e) {
     e.preventDefault();
-    const data = { name: form.name, building: form.building, floor: Number(form.floor), area: Number(form.area), elevators: form.elevators.join(",") };
+    const data = { name: form.name, building: form.building, floor: Number(form.floor), area: Number(form.area), elevators: form.elevators.sort().join(",") };
     if (editing) { await api.updateTenant(editing, data); } else { await api.createTenant(data); }
     resetForm();
     setShowForm(false);
@@ -104,7 +108,7 @@ export default function Tenants() {
           {tenants.length === 0 && <tr><td colSpan="6" className="empty">暂无租户</td></tr>}
           {tenants.map((t) => (
             <tr key={t.id}>
-              <td>{t.name}</td><td>{t.building}栋</td><td>{t.floor}楼</td><td>{t.area}</td><td>{t.elevators}</td>
+              <td>{t.name}</td><td>{t.building}栋</td><td>{t.floor}楼</td><td>{t.area}</td><td>{sortElevators(t.elevators)}</td>
               <td className="actions">
                 <button className="btn-sm" onClick={() => startEdit(t)}>编辑</button>
                 <button className="btn-sm btn-danger" onClick={() => handleDelete(t.id)}>删除</button>
