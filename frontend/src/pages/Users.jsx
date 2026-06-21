@@ -10,6 +10,7 @@ export default function Users() {
   const [newPassword, setNewPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [search, setSearch] = useState("");
 
   useEffect(() => { loadUsers(); }, []);
 
@@ -70,12 +71,20 @@ export default function Users() {
     } catch (e) { setError(e.message); }
   }
 
+  const filtered = users.filter(function(u) {
+    if (!search) return true;
+    var q = search.toLowerCase();
+    return u.username.toLowerCase().includes(q) || u.role.toLowerCase().includes(q);
+  });
+
   return (
     <div className="page">
       <h2>用户管理</h2>
       {error && <div className="error-msg">{error}</div>}
 
       <div className="toolbar">
+        <input className="search-input" type="text" placeholder="搜索用户名..."
+          value={search} onChange={(e) => setSearch(e.target.value)} />
         <button className="btn-primary" onClick={openNew}>新增用户</button>
       </div>
 
@@ -83,8 +92,7 @@ export default function Users() {
         <div className="card" style={{ marginTop: 12 }}>
           <h3>{editing ? "编辑用户" : "新增用户"}</h3>
           <div className="form-row">
-            <label>用户名
-              <input type="text" value={form.username}
+            <label>用户名              <input type="text" value={form.username}
                 onChange={(e) => setForm({ ...form, username: e.target.value })}
                 disabled={!!editing} />
             </label>
@@ -119,8 +127,7 @@ export default function Users() {
         <div className="card" style={{ marginTop: 12 }}>
           <h3>重置密码</h3>
           <div className="form-row">
-            <label>新密码
-              <input type="password" value={newPassword}
+            <label>新密码              <input type="password" value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)} />
             </label>
           </div>
@@ -143,7 +150,8 @@ export default function Users() {
           </tr>
         </thead>
         <tbody>
-          {users.map((u) => (
+          {filtered.length === 0 && <tr><td colSpan="4" className="empty">暂无用户</td></tr>}
+          {filtered.map((u) => (
             <tr key={u.id}>
               <td>{u.username}</td>
               <td>{u.role === "admin" ? "管理员" : "普通用户"}</td>
