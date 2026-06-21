@@ -12,6 +12,7 @@ export default function Tenants() {
   const [showForm, setShowForm] = useState(false);
   const [tenants, setTenants] = useState([]);
   const [filter, setFilter] = useState("");
+  const [search, setSearch] = useState("");
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState({ name: "", building: "A", floor: 2, area: "", elevators: [] });
 
@@ -52,6 +53,12 @@ export default function Tenants() {
     loadTenants();
   }
 
+  const filtered = tenants.filter(function(t) {
+    if (!search) return true;
+    var q = search.toLowerCase();
+    return t.name.toLowerCase().includes(q) || t.building.toLowerCase().includes(q) || String(t.floor).includes(q);
+  });
+
   return (
     <div className="page">
       <h2>租户管理</h2>
@@ -61,6 +68,8 @@ export default function Tenants() {
           <option value="A">A栋</option>
           <option value="B">B栋</option>
         </select>
+        <input className="search-input" type="text" placeholder="搜索租户名称、楼栋、楼层..."
+          value={search} onChange={(e) => setSearch(e.target.value)} />
         <button className="btn-primary" onClick={() => { setShowForm(true); resetForm(); }}>新增租户</button>
       </div>
 
@@ -105,8 +114,8 @@ export default function Tenants() {
           <tr><th>名称</th><th>楼栋</th><th>楼层</th><th>面积(㎡)</th><th>使用电梯</th><th>操作</th></tr>
         </thead>
         <tbody>
-          {tenants.length === 0 && <tr><td colSpan="6" className="empty">暂无租户</td></tr>}
-          {tenants.map((t) => (
+          {filtered.length === 0 && <tr><td colSpan="6" className="empty">暂无租户</td></tr>}
+          {filtered.map((t) => (
             <tr key={t.id}>
               <td>{t.name}</td><td>{t.building}栋</td><td>{t.floor}楼</td><td>{t.area}</td><td>{sortElevators(t.elevators)}</td>
               <td className="actions">
